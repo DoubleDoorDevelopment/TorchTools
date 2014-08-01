@@ -1,0 +1,16 @@
+[
+{
+  "modid": "TorchTools",
+  "name": "TorchTools",
+  "description": "Place torches with a right click of your pick",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "https://github.com/dries007/TorchTools",
+  "updateUrl": "",
+  "authors": ["Dries007"],
+  "credits": "Thanks Tinkers Construct for the idea.",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
