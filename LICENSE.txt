@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2014 Dries K. Aka Dries007 and the CCM modding crew.
+Copyright (c) 2014 DoubleDoorDevelopment
 
 I can't demand this, but I ask for respect and gratitude for the time and effort 
 put into the project by all developers, testers, designers and documenters. ~~Dries007
