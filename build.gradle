@@ -78,7 +78,7 @@ uploadArchives {
     if (new File(repo).exists()) {
         repositories {
             mavenDeployer {
-                repository(url: repo)
+                repository(url: "file://localhost" + repo)
                 pom {
                     groupId = project.group
                     version = project.minecraft.version + "-" + project.version
