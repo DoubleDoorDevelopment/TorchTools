@@ -27,13 +27,16 @@
 package net.dries007.torchtools;
 
 import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import org.apache.logging.log4j.Logger;
 
 import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK;
 
@@ -53,9 +56,21 @@ public class TorchTools
     @Mod.Instance(MODID)
     public static TorchTools instance;
 
+    public boolean debug = false;
+    private Logger        logger;
+
     public TorchTools()
     {
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent event)
+    {
+        logger = event.getModLog();
+        Configuration configuration = new Configuration(event.getSuggestedConfigurationFile());
+        debug = configuration.getBoolean("debug", MODID, debug, "Enable debug, use when errors or weird behaviour happens.");
+        if (configuration.hasChanged()) configuration.save();
     }
 
     @SubscribeEvent
@@ -76,11 +91,18 @@ public class TorchTools
         if (slotStack == null) return;
         // Set current slot to new slot to fool Minecraft
         event.entityPlayer.inventory.currentItem = newSlot;
+        // Debug info
+        if (debug) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tOldSlot: " + oldSlot + "\tOldStack: " + slotStack);
         // Fake right click                                                                                                                                                   Oh look fake values :p
-        ((EntityPlayerMP) event.entityPlayer).theItemInWorldManager.activateBlockOrUseItem(event.entityPlayer, event.world, slotStack, event.x, event.y, event.z, event.face, 0.5f, 0.5f, 0.5f);
+        boolean b = ((EntityPlayerMP) event.entityPlayer).theItemInWorldManager.activateBlockOrUseItem(event.entityPlayer, event.world, slotStack, event.x, event.y, event.z, event.face, 0.5f, 0.5f, 0.5f);
+        // Remove empty stacks
+        if (slotStack.stackSize <= 0) slotStack = null;
+        // Debug info
+        if (debug) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tNewSlot: " + newSlot + "\tNewStack: " + slotStack + "\tResult: " + b);
         // Set old slot back properly
         event.entityPlayer.inventory.currentItem = oldSlot;
         // Update client
-        ((EntityPlayerMP) event.entityPlayer).playerNetServerHandler.sendPacket(new S2FPacketSetSlot(event.entityPlayer.openContainer.windowId, newSlot + 36, slotStack));
+        event.entityPlayer.inventory.setInventorySlotContents(newSlot, slotStack);
+        ((EntityPlayerMP) event.entityPlayer).playerNetServerHandler.sendPacket(new S2FPacketSetSlot(0, newSlot + 36, slotStack));
     }
 }
