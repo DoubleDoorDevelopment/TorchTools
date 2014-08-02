@@ -43,8 +43,8 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 
 import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK;
 
@@ -86,7 +86,7 @@ public class TorchTools
         if (!sillyness) return;
         try
         {
-            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL))).getAsJsonObject();
+            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL), Charset.forName("UTF-8"))).getAsJsonObject();
         }
         catch (Exception e)
         {
@@ -136,17 +136,10 @@ public class TorchTools
     @SubscribeEvent
     public void nameFormatEvent(PlayerEvent.NameFormat event)
     {
-        try
-        {
-            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL))).getAsJsonObject();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
         if (!sillyness) return;
         try
         {
+            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL), Charset.forName("UTF-8"))).getAsJsonObject();
             if (perks.has(event.username))
             {
                 JsonObject perk = perks.getAsJsonObject(event.username);
