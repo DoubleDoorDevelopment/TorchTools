@@ -26,17 +26,24 @@
 
 package net.dries007.torchtools;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.registry.GameData;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
+
+import java.net.URL;
 
 import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK;
 
@@ -52,12 +59,14 @@ import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.
 public class TorchTools
 {
     public static final String MODID = "TorchTools";
+    public static final String PERKS_URL = "http://doubledoordev.net/perks.json";
 
     @Mod.Instance(MODID)
     public static TorchTools instance;
 
-    public boolean debug = false;
-    private Logger        logger;
+    public boolean      debug = false;
+    private Logger      logger;
+    private JsonObject  perks = new JsonObject();
 
     public TorchTools()
     {
@@ -71,8 +80,19 @@ public class TorchTools
         Configuration configuration = new Configuration(event.getSuggestedConfigurationFile());
         debug = configuration.getBoolean("debug", MODID, debug, "Enable debug, use when errors or weird behaviour happens.");
         if (configuration.hasChanged()) configuration.save();
+        try
+        {
+            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL))).getAsJsonObject();
+        }
+        catch (Exception e)
+        {
+
+        }
     }
 
+    /**
+     * This method is the mod. Everything else is extra
+     */
     @SubscribeEvent
     public void playerInteractEventHandler(PlayerInteractEvent event)
     {
@@ -104,5 +124,26 @@ public class TorchTools
         // Update client
         event.entityPlayer.inventory.setInventorySlotContents(newSlot, slotStack);
         ((EntityPlayerMP) event.entityPlayer).playerNetServerHandler.sendPacket(new S2FPacketSetSlot(0, newSlot + 36, slotStack));
+    }
+
+    /**
+     * Something other than capes for once
+     */
+    @SubscribeEvent
+    public void nameFormatEvent(PlayerEvent.NameFormat event)
+    {
+        try
+        {
+            if (perks.has(event.username))
+            {
+                JsonObject perk = perks.getAsJsonObject(event.username);
+                if (perk.has("displayname")) event.displayname = perk.get("displayname").getAsString();
+                if (perk.has("hat") && (event.entityPlayer.inventory.armorInventory[3] == null || event.entityPlayer.inventory.armorInventory[3].stackSize == 0)) event.entityPlayer.inventory.armorInventory[3] = new ItemStack(GameData.getBlockRegistry().getObject(perk.get("hat").getAsString()), 0, perk.has("hat_meta") ? perk.get("hat_meta").getAsInt() : 0);
+            }
+        }
+        catch (Exception e)
+        {
+
+        }
     }
 }

@@ -24,20 +24,18 @@ apply plugin: "forge"
 apply plugin: "maven"
 
 group = "net.dries007.torchtools"
-version = "1.0.1"
+version = "1.0.2"
 
 targetCompatibility = 1.7
 sourceCompatibility = 1.7
 
-archivesBaseName = 'Torchools'
+archivesBaseName = 'TorchTools'
 minecraft {
     version = "1.7.10-10.13.0.1190"
     runDir = "jars"
 }
 
-ext.BUILD_NUMBER = System.getenv().BUILD_NUMBER;
-if (ext.BUILD_NUMBER == null) ext.BUILD_NUMBER = "0"
-version = version + "." + ext.BUILD_NUMBER
+if (System.getenv().BUILD_NUMBER != null) version += "." + System.getenv().BUILD_NUMBER
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
@@ -73,4 +71,58 @@ artifacts {
 	archives jar
     archives sourcesJar
     archives deobfJar
+}
+
+uploadArchives {
+    String repo = "/var/www/ddd/maven/";
+    if (new File(repo).exists()) {
+        repositories {
+            mavenDeployer {
+                repository(url: repo)
+                pom {
+                    groupId = project.group
+                    version = project.minecraft.version + "-" + project.version
+                    artifactId = project.archivesBaseName
+                    project {
+                        name project.archivesBaseName
+                        packaging 'jar'
+                        description 'Right click with any tool to use the "place" action with the next slot in your hotbar.'
+                        url 'https://github.com/DoubleDoorDevelopment/TorchTools'
+
+                        scm {
+                            url 'https://github.com/DoubleDoorDevelopment/TorchTools'
+                            connection 'scm:git:git://github.com/DoubleDoorDevelopment/TorchTools.git'
+                            developerConnection 'scm:git:git@github.com:DoubleDoorDevelopment/TorchTools.git'
+                        }
+
+                        issueManagement {
+                            system 'github'
+                            url 'https://github.com/DoubleDoorDevelopment/TorchTools/issues'
+                        }
+
+                        licenses  {
+                            license  {
+                                name 'MIT License'
+                                url 'https://raw.github.com/DoubleDoorDevelopment/TorchTools/master/LICENCE.txt'
+                                distribution 'repo'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'Dries007'
+                                name 'Dries007'
+                                roles { role 'developer' }
+                            }
+                            developer {
+                                id 'Claycorp'
+                                name 'Claycorp'
+                                roles { role 'architect' }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
