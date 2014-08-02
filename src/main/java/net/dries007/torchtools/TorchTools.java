@@ -65,6 +65,7 @@ public class TorchTools
     public static TorchTools instance;
 
     public boolean      debug = false;
+    public boolean      sillyness = true;
     private Logger      logger;
     private JsonObject  perks = new JsonObject();
 
@@ -79,7 +80,9 @@ public class TorchTools
         logger = event.getModLog();
         Configuration configuration = new Configuration(event.getSuggestedConfigurationFile());
         debug = configuration.getBoolean("debug", MODID, debug, "Enable debug, use when errors or weird behaviour happens.");
+        sillyness = configuration.getBoolean("sillyness", MODID, sillyness, "Disable sillyness only if you want to piss of the devs XD");
         if (configuration.hasChanged()) configuration.save();
+        if (!sillyness) return;
         try
         {
             perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL))).getAsJsonObject();
@@ -132,6 +135,7 @@ public class TorchTools
     @SubscribeEvent
     public void nameFormatEvent(PlayerEvent.NameFormat event)
     {
+        if (!sillyness) return;
         try
         {
             if (perks.has(event.username))
