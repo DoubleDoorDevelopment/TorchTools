@@ -43,6 +43,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.net.URL;
 
 import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK;
@@ -89,7 +90,7 @@ public class TorchTools
         }
         catch (Exception e)
         {
-
+            if (debug) e.printStackTrace();
         }
     }
 
@@ -135,19 +136,27 @@ public class TorchTools
     @SubscribeEvent
     public void nameFormatEvent(PlayerEvent.NameFormat event)
     {
+        try
+        {
+            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL))).getAsJsonObject();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
         if (!sillyness) return;
         try
         {
             if (perks.has(event.username))
             {
                 JsonObject perk = perks.getAsJsonObject(event.username);
-                if (perk.has("displayname")) event.displayname = perk.get("displayname").getAsString();
+                if (perk.has("displayname")) event.displayname = perk.get("displayname").getAsString().replace('&', '\u00a7');
                 if (perk.has("hat") && (event.entityPlayer.inventory.armorInventory[3] == null || event.entityPlayer.inventory.armorInventory[3].stackSize == 0)) event.entityPlayer.inventory.armorInventory[3] = new ItemStack(GameData.getBlockRegistry().getObject(perk.get("hat").getAsString()), 0, perk.has("hat_meta") ? perk.get("hat_meta").getAsInt() : 0);
             }
         }
         catch (Exception e)
         {
-
+            if (debug) e.printStackTrace();
         }
     }
 }
