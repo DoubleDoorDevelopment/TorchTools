@@ -3,6 +3,11 @@ TorchTools
 
 This must be the smallest functional mod I have ever seen...
 
+Download
+--------
+
+We have downloads on [curseforge](http://minecraft.curseforge.com/mc-mods/222980-torchools).
+
 How it works:
 -------------
 
