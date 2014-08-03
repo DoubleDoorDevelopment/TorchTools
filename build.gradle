@@ -36,6 +36,9 @@ minecraft {
 }
 
 if (System.getenv().BUILD_NUMBER != null) version += "." + System.getenv().BUILD_NUMBER
+new File("version.txt").write(version)
+new File("mcversion.txt").write(project.minecraft.version)
+new File("apiversion.txt").write(project.minecraft.apiVersion)
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
