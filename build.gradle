@@ -15,6 +15,8 @@ buildscript {
     }
 }
 
+import groovy.json.*
+
 configurations {
     compile
     deployJars
@@ -36,9 +38,9 @@ minecraft {
 }
 
 if (System.getenv().BUILD_NUMBER != null) version += "." + System.getenv().BUILD_NUMBER
-new File("version.txt").write(version)
-new File("mcversion.txt").write(project.minecraft.version)
-new File("apiversion.txt").write(project.minecraft.apiVersion)
+def builder = new groovy.json.JsonBuilder()
+builder (version: version, mcversion: project.minecraft.version, apiversion: project.minecraft.apiVersion)
+new File("versions.json").write(builder.toPrettyString())
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
