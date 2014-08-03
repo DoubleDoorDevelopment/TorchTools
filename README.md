@@ -6,7 +6,7 @@ This must be the smallest functional mod I have ever seen...
 Download
 --------
 
-We have downloads on [curseforge](http://minecraft.curseforge.com/mc-mods/222980-torchools).
+We have downloads on [curseforge](http://minecraft.curseforge.com/mc-mods/222980-torchools) and on [our website](http://doubledoordev.net/).
 
 How it works:
 -------------
