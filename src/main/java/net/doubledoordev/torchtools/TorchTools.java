@@ -24,27 +24,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.dries007.torchtools;
+package net.doubledoordev.torchtools;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.registry.GameData;
+import net.doubledoordev.util.DevPerks;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
-
-import java.net.URL;
-import java.nio.charset.Charset;
 
 import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK;
 
@@ -60,15 +53,12 @@ import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.
 public class TorchTools
 {
     public static final String MODID = "TorchTools";
-    public static final String PERKS_URL = "http://doubledoordev.net/perks.json";
 
     @Mod.Instance(MODID)
     public static TorchTools instance;
 
-    public boolean      debug = false;
-    public boolean      sillyness = true;
+    private boolean      debug = false;
     private Logger      logger;
-    private JsonObject  perks = new JsonObject();
 
     public TorchTools()
     {
@@ -81,17 +71,8 @@ public class TorchTools
         logger = event.getModLog();
         Configuration configuration = new Configuration(event.getSuggestedConfigurationFile());
         debug = configuration.getBoolean("debug", MODID, debug, "Enable debug, use when errors or weird behaviour happens.");
-        sillyness = configuration.getBoolean("sillyness", MODID, sillyness, "Disable sillyness only if you want to piss of the devs XD");
+        if (configuration.getBoolean("sillyness", MODID, true, "Disable sillyness only if you want to piss of the devs XD")) MinecraftForge.EVENT_BUS.register(new DevPerks(debug));
         if (configuration.hasChanged()) configuration.save();
-        if (!sillyness) return;
-        try
-        {
-            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL), Charset.forName("UTF-8"))).getAsJsonObject();
-        }
-        catch (Exception e)
-        {
-            if (debug) e.printStackTrace();
-        }
     }
 
     /**
@@ -128,28 +109,5 @@ public class TorchTools
         // Update client
         event.entityPlayer.inventory.setInventorySlotContents(newSlot, slotStack);
         ((EntityPlayerMP) event.entityPlayer).playerNetServerHandler.sendPacket(new S2FPacketSetSlot(0, newSlot + 36, slotStack));
-    }
-
-    /**
-     * Something other than capes for once
-     */
-    @SubscribeEvent
-    public void nameFormatEvent(PlayerEvent.NameFormat event)
-    {
-        if (!sillyness) return;
-        try
-        {
-            perks = new JsonParser().parse(IOUtils.toString(new URL(PERKS_URL), Charset.forName("UTF-8"))).getAsJsonObject();
-            if (perks.has(event.username))
-            {
-                JsonObject perk = perks.getAsJsonObject(event.username);
-                if (perk.has("displayname")) event.displayname = perk.get("displayname").getAsString();
-                if (perk.has("hat") && (event.entityPlayer.inventory.armorInventory[3] == null || event.entityPlayer.inventory.armorInventory[3].stackSize == 0)) event.entityPlayer.inventory.armorInventory[3] = new ItemStack(GameData.getBlockRegistry().getObject(perk.get("hat").getAsString()), 0, perk.has("hat_meta") ? perk.get("hat_meta").getAsInt() : 0);
-            }
-        }
-        catch (Exception e)
-        {
-            if (debug) e.printStackTrace();
-        }
     }
 }

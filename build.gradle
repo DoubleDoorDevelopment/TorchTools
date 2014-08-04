@@ -25,7 +25,7 @@ configurations {
 apply plugin: "forge"
 apply plugin: "maven"
 
-group = "net.dries007.torchtools"
+group = "net.doubledoordev.torchtools"
 version = "1.0.2"
 
 targetCompatibility = 1.7
