@@ -86,7 +86,7 @@ public class TorchTools
     public void playerInteractEventHandler(PlayerInteractEvent event)
     {
         // Server side and on block only.
-        if (event.world.isRemote || event.action != RIGHT_CLICK_BLOCK) return;
+        if (event.isCanceled() || event.world.isRemote || event.action != RIGHT_CLICK_BLOCK) return;
         ItemStack heldItem = event.entityPlayer.inventory.getCurrentItem();
         // Only tools, not null
         if (heldItem == null || !(heldItem.getItem() instanceof ItemTool)) return;
@@ -113,5 +113,7 @@ public class TorchTools
         // Update client
         event.entityPlayer.inventory.setInventorySlotContents(newSlot, slotStack);
         ((EntityPlayerMP) event.entityPlayer).playerNetServerHandler.sendPacket(new S2FPacketSetSlot(0, newSlot + 36, slotStack));
+        // Prevent derpy doors
+        event.setCanceled(true);
     }
 }
