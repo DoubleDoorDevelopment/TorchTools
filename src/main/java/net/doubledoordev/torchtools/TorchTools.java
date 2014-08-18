@@ -30,18 +30,21 @@
 
 package net.doubledoordev.torchtools;
 
+import cpw.mods.fml.client.config.IConfigElement;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import net.doubledoordev.util.DevPerks;
+import net.doubledoordev.d3core.D3Core;
+import net.doubledoordev.d3core.util.ID3Mod;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import org.apache.logging.log4j.Logger;
+
+import java.util.List;
 
 import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK;
 
@@ -54,14 +57,13 @@ import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.
  * @author DoubleDoorDevelopment
  */
 @Mod(modid = TorchTools.MODID, name = TorchTools.MODID)
-public class TorchTools
+public class TorchTools implements ID3Mod
 {
     public static final String MODID = "TorchTools";
 
     @Mod.Instance(MODID)
     public static TorchTools instance;
 
-    private boolean      debug = false;
     private Logger      logger;
 
     public TorchTools()
@@ -73,10 +75,6 @@ public class TorchTools
     public void preInit(FMLPreInitializationEvent event)
     {
         logger = event.getModLog();
-        Configuration configuration = new Configuration(event.getSuggestedConfigurationFile());
-        debug = configuration.getBoolean("debug", MODID, debug, "Enable debug, use when errors or weird behaviour happens.");
-        if (configuration.getBoolean("sillyness", MODID, true, "Disable sillyness only if you want to piss of the devs XD")) MinecraftForge.EVENT_BUS.register(new DevPerks(debug));
-        if (configuration.hasChanged()) configuration.save();
     }
 
     /**
@@ -101,13 +99,13 @@ public class TorchTools
         // Set current slot to new slot to fool Minecraft
         event.entityPlayer.inventory.currentItem = newSlot;
         // Debug info
-        if (debug) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tOldSlot: " + oldSlot + "\tOldStack: " + slotStack);
+        if (D3Core.debug()) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tOldSlot: " + oldSlot + "\tOldStack: " + slotStack);
         // Fake right click                                                                                                                                                   Oh look fake values :p
         boolean b = ((EntityPlayerMP) event.entityPlayer).theItemInWorldManager.activateBlockOrUseItem(event.entityPlayer, event.world, slotStack, event.x, event.y, event.z, event.face, 0.5f, 0.5f, 0.5f);
         // Remove empty stacks
         if (slotStack.stackSize <= 0) slotStack = null;
         // Debug info
-        if (debug) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tNewSlot: " + newSlot + "\tNewStack: " + slotStack + "\tResult: " + b);
+        if (D3Core.debug()) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tNewSlot: " + newSlot + "\tNewStack: " + slotStack + "\tResult: " + b);
         // Set old slot back properly
         event.entityPlayer.inventory.currentItem = oldSlot;
         // Update client
@@ -115,5 +113,17 @@ public class TorchTools
         ((EntityPlayerMP) event.entityPlayer).playerNetServerHandler.sendPacket(new S2FPacketSetSlot(0, newSlot + 36, slotStack));
         // Prevent derpy doors
         event.setCanceled(true);
+    }
+
+    @Override
+    public void syncConfig()
+    {
+        
+    }
+
+    @Override
+    public void addConfigElements(List<IConfigElement> configElements)
+    {
+
     }
 }
