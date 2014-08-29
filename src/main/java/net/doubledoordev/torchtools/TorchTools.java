@@ -95,7 +95,7 @@ public class TorchTools implements ID3Mod
         // Get new item
         ItemStack slotStack = event.entityPlayer.inventory.getStackInSlot(newSlot);
         // No null please
-        if (slotStack == null) return;
+        if (slotStack == null || newSlot >= 9) return; //Prevents overlooping into non-hotbar slots!
         // Set current slot to new slot to fool Minecraft
         event.entityPlayer.inventory.currentItem = newSlot;
         // Debug info
