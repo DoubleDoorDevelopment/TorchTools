@@ -65,6 +65,7 @@ public class TorchTools implements ID3Mod
     public static TorchTools instance;
 
     private Logger      logger;
+    private int[] slots = {8, 2, 3, 4, 5, 6, 7, 8, -1};
 
     public TorchTools()
     {
@@ -90,12 +91,16 @@ public class TorchTools implements ID3Mod
         if (heldItem == null || !(heldItem.getItem() instanceof ItemTool)) return;
         // Save old slot id
         int oldSlot = event.entityPlayer.inventory.currentItem;
-        // Calculate new slot id
-        int newSlot = oldSlot == 0 ? 8 : oldSlot + 1;
+        // Avoid invalid array indexes
+        if (oldSlot < 0 || oldSlot > 8) return;
+        // Get the new slot id
+        int newSlot = slots[oldSlot];
+        // Avoid invalid slots indexes
+        if (newSlot < 0 || newSlot > 8) return;
         // Get new item
         ItemStack slotStack = event.entityPlayer.inventory.getStackInSlot(newSlot);
         // No null please
-        if (slotStack == null || newSlot >= 9) return; //Prevents overlooping into non-hotbar slots!
+        if (slotStack == null) return;
         // Set current slot to new slot to fool Minecraft
         event.entityPlayer.inventory.currentItem = newSlot;
         // Debug info
