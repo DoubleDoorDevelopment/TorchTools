@@ -41,6 +41,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.network.play.server.S2FPacketSetSlot;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.ConfigElement;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import org.apache.logging.log4j.Logger;
 
@@ -66,6 +68,8 @@ public class TorchTools implements ID3Mod
 
     private Logger      logger;
     private int[] slots = {8, 2, 3, 4, 5, 6, 7, 8, -1};
+    private Configuration configuration;
+    private boolean disableTE = false;
 
     public TorchTools()
     {
@@ -76,6 +80,8 @@ public class TorchTools implements ID3Mod
     public void preInit(FMLPreInitializationEvent event)
     {
         logger = event.getModLog();
+        configuration = new Configuration(event.getSuggestedConfigurationFile());
+        syncConfig();
     }
 
     /**
@@ -89,6 +95,8 @@ public class TorchTools implements ID3Mod
         ItemStack heldItem = event.entityPlayer.inventory.getCurrentItem();
         // Only tools, not null
         if (heldItem == null || !(heldItem.getItem() instanceof ItemTool)) return;
+        // disableTE code
+        if (disableTE && event.world.getTileEntity(event.x, event.y, event.z) != null) return;
         // Save old slot id
         int oldSlot = event.entityPlayer.inventory.currentItem;
         // Avoid invalid array indexes
@@ -123,12 +131,14 @@ public class TorchTools implements ID3Mod
     @Override
     public void syncConfig()
     {
-        
+        disableTE = configuration.getBoolean("disableTE", MODID.toLowerCase(), disableTE, "This prevents the place effect from occurring when you are right clicking on a tileentity. Use for dupe glitches.");
+
+        if (configuration.hasChanged()) configuration.save();
     }
 
     @Override
     public void addConfigElements(List<IConfigElement> configElements)
     {
-
+        configElements.add(new ConfigElement(configuration.getCategory(MODID.toLowerCase())));
     }
 }

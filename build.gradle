@@ -26,14 +26,14 @@ apply plugin: "forge"
 apply plugin: "maven"
 
 group = "net.doubledoordev.torchtools"
-version = "1.1.0"
+version = "1.2.0"
 
 targetCompatibility = 1.7
 sourceCompatibility = 1.7
 
 archivesBaseName = 'TorchTools'
 minecraft {
-    version = "1.7.10-10.13.0.1190"
+    version = "1.7.10-10.13.2.1291"
     runDir = "jars"
 }
 
