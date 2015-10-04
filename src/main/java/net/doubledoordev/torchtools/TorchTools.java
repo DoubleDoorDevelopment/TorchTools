@@ -69,7 +69,7 @@ public class TorchTools implements ID3Mod
     private Logger      logger;
     private int[] slots = {8, 2, 3, 4, 5, 6, 7, 8, -1};
     private Configuration configuration;
-    private boolean disableTE = false;
+    private boolean disableTE = true;
 
     public TorchTools()
     {
