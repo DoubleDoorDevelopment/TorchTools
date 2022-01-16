@@ -1,148 +1,119 @@
 buildscript {
     repositories {
+        // These repositories are only for Gradle plugins, put any other repositories in the repository block further below
+        maven { url = 'https://maven.minecraftforge.net' }
         mavenCentral()
-        maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
     }
 }
+apply plugin: 'net.minecraftforge.gradle'
+// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-import groovy.json.*
+version = '3.0.0'
+group = 'net.doubledoordev.torchtools' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = 'torchtools'
 
-configurations {
-    compile
-    deployJars
-}
+// Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-apply plugin: "forge"
-apply plugin: "maven"
-
-group = "net.doubledoordev.torchtools"
-version = "1.2.0"
-
-targetCompatibility = 1.7
-sourceCompatibility = 1.7
-
-archivesBaseName = 'TorchTools'
 minecraft {
-    version = "1.7.10-10.13.2.1291"
-    runDir = "jars"
-}
+    // The mappings can be changed at any time and must be in the following format.
+    // Channel:   Version:
+    // snapshot   YYYYMMDD   Snapshot are built nightly.
+    // stable     #          Stables are built at the discretion of the MCP team.
+    // official   MCVersion  Official field/method names from Mojang mapping files
+    //
+    // You must be aware of the Mojang license when using the 'official' mappings.
+    // See more information here: https://github.com/MinecraftForge/MCPConfig/blob/master/Mojang.md
+    //
+    // Use non-default mappings at your own risk. They may not always work.
+    // Simply re-run your setup task after changing the mappings to update your workspace.
+    mappings channel: 'official', version: '1.18.1'
 
-repositories {
-    maven {
-         name "DDD repo"
-         url "http://doubledoordev.net/maven/"
-     }
-}
+    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Currently, this location cannot be changed from the default.
 
-dependencies {
-    compile "net.doubledoordev.d3core:D3Core:" + project.minecraft.version + "-+:dev"
-}
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
+    runs {
+        client {
+            workingDirectory project.file('run')
 
-if (System.getenv().BUILD_NUMBER != null) version += "." + System.getenv().BUILD_NUMBER
-def builder = new groovy.json.JsonBuilder()
-builder (version: version, mcversion: project.minecraft.version, apiversion: project.minecraft.apiVersion)
-new File("versions.json").write(builder.toPrettyString())
+            // Recommended logging data for a userdev environment
+            // The markers can be added/remove as needed separated by commas.
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            property 'forge.logging.markers', 'REGISTRIES'
 
-processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        include '**/*.info'
-        expand 'version':project.version, 'mcversion':project.minecraft.version
-    }
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            property 'forge.logging.console.level', 'debug'
 
-    from(sourceSets.main.resources.srcDirs) {
-        exclude '**/*.info'
-    }
-}
-
-task sourcesJar(type: Jar) {
-    from "LICENSE.txt"
-    from sourceSets.main.allSource
-    classifier = 'src'
-    appendix = project.minecraft.version
-}
-
-task deobfJar(type: Jar) {
-    from "LICENSE.txt"
-    from sourceSets.main.output
-    from (sourceSets.main.allSource.srcDirs) {
-        include '**/*.java'
-    }
-	classifier = 'dev'
-    appendix = project.minecraft.version
-}
-
-jar {
-    from "LICENSE.txt"
-    appendix = project.minecraft.version
-}
-
-artifacts {
-	archives jar
-    archives sourcesJar
-    archives deobfJar
-}
-
-uploadArchives {
-    if (project.hasProperty("dddUser") && project.hasProperty("dddUrl") && project.hasProperty("dddPass")) {
-        repositories {
-            mavenDeployer {
-                repository(url: dddUrl) {
-                    authentication(userName: dddUser, password: dddPass)
+            mods {
+                examplemod {
+                    source sourceSets.main
                 }
-                pom {
-                    groupId = project.group
-                    version = project.minecraft.version + "-" + project.version
-                    artifactId = project.archivesBaseName
-                    project {
-                        name project.archivesBaseName
-                        packaging 'jar'
-                        description 'Right click with any tool to use the "place" action with the next slot in your hotbar.'
-                        url 'https://github.com/DoubleDoorDevelopment/TorchTools'
+            }
+        }
 
-                        scm {
-                            url 'https://github.com/DoubleDoorDevelopment/TorchTools'
-                            connection 'scm:git:git://github.com/DoubleDoorDevelopment/TorchTools.git'
-                            developerConnection 'scm:git:git@github.com:DoubleDoorDevelopment/TorchTools.git'
-                        }
+        server {
+            workingDirectory project.file('run')
 
-                        issueManagement {
-                            system 'github'
-                            url 'https://github.com/DoubleDoorDevelopment/TorchTools/issues'
-                        }
+            // Recommended logging data for a userdev environment
+            // The markers can be added/remove as needed separated by commas.
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            property 'forge.logging.markers', 'REGISTRIES'
 
-                        licenses  {
-                            license  {
-                                name 'MIT License'
-                                url 'https://raw.github.com/DoubleDoorDevelopment/TorchTools/master/LICENCE.txt'
-                                distribution 'repo'
-                            }
-                        }
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            property 'forge.logging.console.level', 'debug'
 
-                        developers {
-                            developer {
-                                id 'Dries007'
-                                name 'Dries007'
-                                roles { role 'developer' }
-                            }
-                            developer {
-                                id 'Claycorp'
-                                name 'Claycorp'
-                                roles { role 'architect' }
-                            }
-                        }
-                    }
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+
+            // Recommended logging data for a userdev environment
+            // The markers can be added/remove as needed separated by commas.
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            property 'forge.logging.console.level', 'debug'
+
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            args '--mod', 'examplemod', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+
+            mods {
+                examplemod {
+                    source sourceSets.main
                 }
             }
         }
     }
+}
+
+// Include resources generated by data generators.
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+dependencies {
+    // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft', it is assumed
+    // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
+    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
+    minecraft 'net.minecraftforge:forge:1.18.1-39.0.19'
 }

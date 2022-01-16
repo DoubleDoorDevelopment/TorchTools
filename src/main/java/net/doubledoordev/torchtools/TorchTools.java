@@ -1,144 +1,82 @@
-/*
- * Copyright (c) 2014, Dries007.net
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- *  Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- *
- *  Neither the name of the project nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package net.doubledoordev.torchtools;
 
-import cpw.mods.fml.client.config.IConfigElement;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import net.doubledoordev.d3core.D3Core;
-import net.doubledoordev.d3core.util.ID3Mod;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemTool;
-import net.minecraft.network.play.server.S2FPacketSetSlot;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.config.ConfigElement;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.Tag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TieredItem;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.common.Mod;
 
-import java.util.List;
-
-import static net.minecraftforge.event.entity.player.PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK;
-
-/**
- * Main mod file
- *
- * Thanks for the idea Tinkers Construct
- *
- * @author Dries007
- * @author DoubleDoorDevelopment
- */
-@Mod(modid = TorchTools.MODID, name = TorchTools.MODID)
-public class TorchTools implements ID3Mod
+@Mod("torchtools")
+public class TorchTools
 {
-    public static final String MODID = "TorchTools";
-
-    @Mod.Instance(MODID)
-    public static TorchTools instance;
-
-    private Logger      logger;
-    private int[] slots = {8, 2, 3, 4, 5, 6, 7, 8, -1};
-    private Configuration configuration;
-    private boolean disableTE = true;
+    public static final String MODID = "torchtools";
+    private static final Logger LOGGER = LogManager.getLogger();
+    //TODO: Make this configurable, It can be done as the slot shifting is done entirely client side.
+    private static final int[] slots = {8, 2, 3, 4, 5, 6, 7, 8, -1};
 
     public TorchTools()
     {
+        //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, TorchToolsConfig.spec);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event)
-    {
-        logger = event.getModLog();
-        configuration = new Configuration(event.getSuggestedConfigurationFile());
-        syncConfig();
-    }
-
-    /**
-     * This method is the mod. Everything else is extra
-     */
     @SubscribeEvent
-    public void playerInteractEventHandler(PlayerInteractEvent event)
+    public void torchingTools(PlayerInteractEvent.RightClickBlock event)
     {
-        // Server side and on block only.
-        if (event.isCanceled() || event.world.isRemote || event.action != RIGHT_CLICK_BLOCK) return;
-        ItemStack heldItem = event.entityPlayer.inventory.getCurrentItem();
-        // Only tools, not null
-        if (heldItem == null || !(heldItem.getItem() instanceof ItemTool)) return;
-        // disableTE code
-        if (disableTE && event.world.getTileEntity(event.x, event.y, event.z) != null) return;
-        // Save old slot id
-        int oldSlot = event.entityPlayer.inventory.currentItem;
-        // Avoid invalid array indexes
-        if (oldSlot < 0 || oldSlot > 8) return;
-        // Get the new slot id
-        int newSlot = slots[oldSlot];
-        // Avoid invalid slots indexes
-        if (newSlot < 0 || newSlot > 8) return;
-        // Get new item
-        ItemStack slotStack = event.entityPlayer.inventory.getStackInSlot(newSlot);
-        // No null please
-        if (slotStack == null) return;
-        // Set current slot to new slot to fool Minecraft
-        event.entityPlayer.inventory.currentItem = newSlot;
-        // Debug info
-        if (D3Core.debug()) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tOldSlot: " + oldSlot + "\tOldStack: " + slotStack);
-        // Fake right click                                                                                                                                                   Oh look fake values :p
-        boolean b = ((EntityPlayerMP) event.entityPlayer).theItemInWorldManager.activateBlockOrUseItem(event.entityPlayer, event.world, slotStack, event.x, event.y, event.z, event.face, 0.5f, 0.5f, 0.5f);
-        // Remove empty stacks
-        if (slotStack.stackSize <= 0) slotStack = null;
-        // Debug info
-        if (D3Core.debug()) logger.info("Player: " + event.entityPlayer.getDisplayName() + "\tNewSlot: " + newSlot + "\tNewStack: " + slotStack + "\tResult: " + b);
-        // Set old slot back properly
-        event.entityPlayer.inventory.currentItem = oldSlot;
-        // Update client
-        event.entityPlayer.inventory.setInventorySlotContents(newSlot, slotStack);
-        ((EntityPlayerMP) event.entityPlayer).playerNetServerHandler.sendPacket(new S2FPacketSetSlot(0, newSlot + 36, slotStack));
-        // Prevent derpy doors
-        event.setCanceled(true);
-    }
+        if (event.isCanceled() && event.getSide() == LogicalSide.SERVER) return;
 
-    @Override
-    public void syncConfig()
-    {
-        disableTE = configuration.getBoolean("disableTE", MODID.toLowerCase(), disableTE, "This prevents the place effect from occurring when you are right clicking on a tileentity. Use for dupe glitches.");
+        Item heldUsedItem = event.getItemStack().getItem();
+        Tag<Item> passClickItemTag = ItemTags.getAllTags().getTagOrEmpty(new ResourceLocation(MODID, "place_pass_items"));
+        Player player = event.getPlayer();
+        InteractionHand handUsed = event.getHand();
 
-        if (configuration.hasChanged()) configuration.save();
-    }
-
-    @Override
-    public void addConfigElements(List<IConfigElement> configElements)
-    {
-        configElements.add(new ConfigElement(configuration.getCategory(MODID.toLowerCase())));
+        // Use Tags with class check.
+        //TODO: Needs a config line for valid items as tags always come from servers. Thus this breaks the tag part unless the owner adds tags...(?)
+        //TODO: Fix the stupid pass through triggering blocks like doors to open and close at the same time due to stacked interactions...
+        //TODO: Set this to use a config to check for tool?
+        //TODO: Block blacklist to cancel interactions on..? Can't be tags.
+        if (passClickItemTag.contains(heldUsedItem) || heldUsedItem instanceof TieredItem)
+        {
+            // Save old slot id
+            int originSlot = player.getInventory().selected;
+            // Make sure we are within the 0-8 hotbar slots.
+            if (originSlot < 0 || originSlot > 8) return;
+            // Get the new slot id
+            int newSlot = slots[originSlot];
+            // Jump out if we hit the last slot.
+            if (newSlot < 0) return;
+            // Get new item
+            ItemStack newSlotStack = player.getInventory().getItem(newSlot);
+            // No empty please
+            if (newSlotStack == ItemStack.EMPTY) return;
+            // Set current slot to new slot to fool Minecraft
+            player.getInventory().selected = newSlot;
+            // Right click with the new slot & item from the client. This handles the call to the server for us. Entirely faking the action of switching and using.
+            if (player.isLocalPlayer())
+            {
+                //TODO: REMOVE Attempts at controlling duplicate clicks.
+                event.setCanceled(true);
+                Minecraft.getInstance().gameMode.useItemOn(Minecraft.getInstance().player, Minecraft.getInstance().level, handUsed, event.getHitVec());
+                // Swing the hand otherwise we stiff arm everything.
+                player.swing(handUsed);
+                //TODO: REMOVE Attempts at controlling duplicate clicks.
+                event.setCanceled(true);
+            }
+            // Set back to origin.
+            player.getInventory().selected = originSlot;
+            //TODO: REMOVE Attempts at controlling duplicate clicks.
+            event.setCanceled(true);
+        }
     }
 }
